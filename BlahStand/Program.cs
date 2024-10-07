@@ -1,75 +1,79 @@
-﻿using OpenQA.Selenium.Chrome;
-using System;
-using System.Threading;
+﻿using System;
+using System.IO;
 
-namespace BlahStand
+namespace RoBin
 {
-    internal class Program
+    class Program
     {
-        public class User
-        {
-            public int Id { get; set; }
-            public string Name { get; set; }
-        }
-
-        public class text
-        {
-            public User user { get; set; } = new User();
-
-            public void PrintName(string names, string Name2)
-            {
-                Console.WriteLine(names);
-                Console.WriteLine(Name2);
-            }
-        }
-     
-        
-        
         static void Main(string[] args)
         {
-            Task Task = null!;
-            Console.CancelKeyPress += (sender, e) =>
-            {
-                e.Cancel = true; 
-             
-            };
+            //            RoBinFormater formater = new RoBinFormater();
+            //            string formattedCode = formater.Format(@"
 
-            RoBin.BoBin<object> r = new RoBin.BoBin<object>();
-            r.AddObject(typeof(Thread));
-            r.AddObject(typeof(Console));
+
+            //@function DeleteFile{$filePath},
+            //{
+
+            //    $deleteResult = @WINAPI {
+            //        dll: ""Kernel32.dll"",
+            //        ""DeleteFileW"",
+            //         $filePath ,
+
+            //        [System.Boolean]  // Returns true if the file is deleted successfully
+            //    };
+
+            //    @if {$deleteResult == True},
+            //    {
+            //        @printf ""File deleted successfully: "" + $filePath;
+            //    };
+
+            //    @if {$deleteResult == False},
+            //    {
+            //        @printf {Failed to delete file: $filePath};
+            //    };
+            //};
+
+            //$files = [C:\Users\Demon\source\repos\RRRR\RRRR\Program.cs, C:\Users\Demon\source\repos\RRRR\RRRR\Program.cs];
+            //@foreach {$file in $files},
+            //{
+            //    @DeleteFile($file);
+            //};
+            //");
+
            
-
-            while (true)
+            if (args.Length == 2 && args[0] == "-r")
             {
-                try
+                string fileName = args[1];
+
+                if (File.Exists(fileName))
                 {
-                    Console.Write($"RB {Environment.CurrentDirectory}>");
-                    var input = Console.ReadLine()!;
-                    if (input == "!open")
+                    string fullCode = File.ReadAllText(fileName);
+                    RoBinFormater formater = new RoBinFormater();
+                    string formattedCode = formater.Format(fullCode);
+
+                    RoBin.BoBin<Program> rbin = new();
+                    try
                     {
-                        string code = "";
-                        Console.Write(">>>");
-                        var @in = default(string);
-                        while ((@in = Console.ReadLine()) != "!exit")
-                        {
-                            Console.Write(">>>");
-                            code += @in+"\n";
-                        }
-                        r.Execute(code);
+                        rbin.Execute(formattedCode);
                     }
-                    else
+                    catch (Exception e)
                     {
-                        r.Execute(input);
+                        Console.WriteLine();
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(e.ToString());
+                        Console.ResetColor();
+                        Console.WriteLine();
+                        Console.ReadLine();
                     }
                 }
-                catch (Exception e)
+                else
                 {
-                    Console.WriteLine();
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(e.ToString());
-                    Console.ResetColor();
-                    Console.WriteLine();
+                    Console.WriteLine($"File {fileName} does not exist.");
                 }
+            }
+            else
+            {
+                Console.WriteLine("Usage: RoBin -c <fileName>");
             }
         }
     }

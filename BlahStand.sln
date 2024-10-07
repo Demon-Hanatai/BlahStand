@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35111.106
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlahStand", "BlahStand\BlahStand.csproj", "{329BD6F3-CC26-46CF-8801-242262416633}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BlahStand", "BlahStand\BlahStand.csproj", "{329BD6F3-CC26-46CF-8801-242262416633}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoBin", "RoBin\RoBin.csproj", "{2AF541B5-B084-4CCB-8B18-F0500638D2EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RoBin", "RoBin\RoBin.csproj", "{2AF541B5-B084-4CCB-8B18-F0500638D2EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Obfuscator", "Obfuscator\Obfuscator.csproj", "{D7C42E66-FAE8-4DC2-96DD-FA557C87CD72}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{2AF541B5-B084-4CCB-8B18-F0500638D2EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2AF541B5-B084-4CCB-8B18-F0500638D2EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2AF541B5-B084-4CCB-8B18-F0500638D2EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7C42E66-FAE8-4DC2-96DD-FA557C87CD72}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7C42E66-FAE8-4DC2-96DD-FA557C87CD72}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7C42E66-FAE8-4DC2-96DD-FA557C87CD72}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7C42E66-FAE8-4DC2-96DD-FA557C87CD72}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

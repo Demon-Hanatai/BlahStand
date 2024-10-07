@@ -10,14 +10,14 @@ namespace RoBin
         public static object ConvertType(Type type, object value)
         {
             if (value == null)
-                return null;
+                return "null";
 
-            string input = value.ToString();
+            string input = value.ToString()!;
             if(EvaluateSimpleCondition(input) is (bool result, bool handled)  && handled is true)
             {
                 return result;
             }
-            // Handle array inputs
+          
             if (IsArray(input))
             {
                 try
@@ -37,11 +37,19 @@ namespace RoBin
                     throw new FormatException($"Invalid array format: {ex.Message}");
                 }
             }
+            if (value is string s && s.Split(" as ") is string[] a && a.Length > 1 && type is null)
+            {
 
-            // Auto-pick the best type if `type` is null
+                if (Type.GetType("System."+String.Join("", a.ToList().Skip(1)).Trim()) is null)
+                {
+                    throw new Exception($"Unable to find System.{String.Join("", a.ToList().Skip(1))}");
+                 
+                }
+                return ConvertType( Type.GetType("System." + String.Join("", a.ToList().Skip(1)).Trim())!, string.Join("",a.Take(1)));
+            }
             if (type == null)
             {
-                return InferType(value.ToString());
+                return InferType(value.ToString()!);
             }
 
             // Handle other types normally
@@ -111,39 +119,51 @@ namespace RoBin
             }
             else if (type == typeof(int))
             {
-                return int.TryParse(stringValue, out var result) ? result : 0;
+                return int.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to int");
             }
             else if (type == typeof(uint))
             {
-                return uint.TryParse(stringValue, out var result) ? result : 0u;
+                return uint.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to uint");
             }
             else if (type == typeof(long))
             {
-                return long.TryParse(stringValue, out var result) ? result : 0L;
+                return long.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to long");
             }
             else if (type == typeof(ulong))
             {
-                return ulong.TryParse(stringValue, out var result) ? result : 0UL;
+                return ulong.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to ulong");
             }
             else if (type == typeof(short))
             {
-                return short.TryParse(stringValue, out var result) ? result : (short)0;
+                return short.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to short");
             }
             else if (type == typeof(ushort))
             {
-                return ushort.TryParse(stringValue, out var result) ? result : (ushort)0;
+                return ushort.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to ushort");
             }
             else if (type == typeof(byte))
             {
-                return byte.TryParse(stringValue, out var result) ? result : (byte)0;
+                return byte.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to byte");
             }
             else if (type == typeof(sbyte))
             {
-                return sbyte.TryParse(stringValue, out var result) ? result : (sbyte)0;
+                return sbyte.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to sbyte");
             }
             else if (type == typeof(double))
             {
-                return double.TryParse(stringValue, out var result) ? result : 0.0;
+                return double.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to double");
+            }
+            else if(type == typeof(nint))
+            {
+                return nint.TryParse(stringValue,out var result) ? result : throw new Exception($"Can't Convert {value} to nint");
+            }
+            else if(type == typeof(UIntPtr))
+            {
+                return uint.TryParse(stringValue,out var result)?result : throw new Exception($"Can't Convert {value} to UIntPtr");
+            }
+            else if (type == typeof(IntPtr))
+            {
+                return uint.TryParse(stringValue, out var result) ? result : throw new Exception($"Can't Convert {value} to IntPtr");
             }
             else if (type == typeof(float))
             {

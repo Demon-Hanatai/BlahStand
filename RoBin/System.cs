@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RoBin
@@ -17,6 +19,7 @@ namespace RoBin
         {
             this.boBin = BoBin;
             BoBin.AddObject(boBin);
+            BoBin.AddObject(new Stack());
         }
         public string[] getalldata_name()
         {
@@ -85,7 +88,7 @@ namespace RoBin
                 // Instantiate the dynamic class using the default constructor
                 try
                 {
-                    var typ  = Activator.CreateInstance(classType);
+                    var typ = Activator.CreateInstance(classType);
                     Type dynamicType = typ.GetType();
 
                     // Get the class name
@@ -138,8 +141,63 @@ namespace RoBin
                 throw new Exception($"Class '{name}' not found.");
             }
         }
+        public  nint @out(string name)
+        {
+            if (!name.StartsWith("$"))
+                throw new Exception("Invalid out token.expected a (EX)$name.");
+            name = name.Remove(0,1);
+            if (boBin.LocalData.FirstOrDefault(x => x.name == name) is DataInfo data)
+            {
+                // Pin the object and get a pointer to its memory address
+                GCHandle handle = GCHandle.Alloc(data.Object, GCHandleType.Pinned);
+                IntPtr objectPtr = handle.AddrOfPinnedObject();
 
+                // Return the pointer as an integer (nint)
+                return (nint)objectPtr;
+            }
+            else
+            {
+               boBin.LocalData.Add(new(name,0));
+                return @out("$"+name);
+            }
+        }
+        public nint @addressof(string n_v)
+        {
+            if (n_v.StartsWith("$"))
+            {
+                n_v = n_v.Remove(0, 1);
+                if (boBin.LocalData.FirstOrDefault(x => x.name == n_v) is DataInfo data)
+                {
+                    GCHandle handle = GCHandle.Alloc(data.Object, GCHandleType.Pinned);
+                    IntPtr objectPtr = handle.AddrOfPinnedObject();
 
+                    return (nint)objectPtr;
+                }
+            }
+
+            else if(n_v.StartsWith("@"))
+            {
+                var split = n_v.Split(" ");
+                if(split.Length>0)
+                {
+                    return @addressof(boBin.CallMethod(split[0], string.Join("", split.Skip(1))).ToString()!);
+                }
+                return 0;
+            }
+            GCHandle str = GCHandle.Alloc(n_v, GCHandleType.Pinned);
+            IntPtr strPtr = str.AddrOfPinnedObject();
+
+            return (nint)str;
+        }
+
+        public void @ref(string parms)
+        {
+         
+        }
+         public string? input()
+        {   
+            return Console.ReadLine();
+        }
         public void dataof(string type)
         {
             var matchingData = boBin.LocalData
@@ -180,11 +238,11 @@ namespace RoBin
 
                 bool left_isStatic = false;
                 bool right_isStatic = false;
-                var leftResolved = (left_isStatic=left.StartsWith('$'))
-                    ? ResolveFromLocalData(left.Substring(1)) 
+                var leftResolved = (left_isStatic = left.StartsWith('$'))
+                    ? ResolveFromLocalData(left.Substring(1))
                     : left;
 
-                var rightResolved = (right_isStatic=right.StartsWith('$'))
+                var rightResolved = (right_isStatic = right.StartsWith('$'))
                     ? ResolveFromLocalData(right.Substring(1))
                     : right;
 
@@ -213,8 +271,8 @@ namespace RoBin
                     if (left_isStatic)
                     {
                         leftResolved = ResolveFromLocalData(left.Substring(1));
-                                            
-                                            
+
+
                     }
                     if (right_isStatic)
                     {
@@ -226,13 +284,13 @@ namespace RoBin
 
         public void _(string ars)
         {
-     
+
             return;
         }
 
         public void @foreach(string logic, string body)
         {
-            Regex foreachRegex = new Regex(@"\s*(\$\w+)\s+in\s+(\[.*\]|@?\w+.*|\$\w+)\s*");
+            Regex foreachRegex = new Regex(@"\s*(\$\w+)\s+in\s+(\[.*\]|@?\w+.*|\$\w+|"".*"")\s*");
 
             var match = foreachRegex.Match(logic);
             if (!match.Success)
@@ -241,13 +299,13 @@ namespace RoBin
             }
 
             // Get the item variable and collection expression
-            string itemVar = match.Groups[1].Value.Trim();  // e.g., "$i"
-            string collectionExp = match.Groups[2].Value.Trim();  // e.g., "[1,2,3,4]", "$users", or "@GetArray 1,2"
+            string itemVar = match.Groups[1].Value.Trim();  // e.g. "$i"
+            string collectionExp = match.Groups[2].Value.Trim();  // e.g. "[1,2,3,4]", "$users", or "@GetArray 1,2"
 
             // Handle the collection expression
             dynamic collection = ProcessCollection(collectionExp);
-            
-            // Ensure the collection is a valid IEnumerable
+
+            // Ensure the collection is a valid IEnumerable,Array
             if (collection is Array enumerableCollection)
             {
                 // Iterate over the collection
@@ -270,7 +328,12 @@ namespace RoBin
         {
             if (collectionExp.StartsWith("$"))
             {
-                return boBin.GetValue(collectionExp);
+                var result =  boBin.GetValue(collectionExp);
+                if (result is not Array)
+                {
+                    return result.ToString()!.ToArray();
+                }
+                return result;
             }
             else if (collectionExp.StartsWith("@"))
             {
@@ -287,8 +350,22 @@ namespace RoBin
                 // Handle direct array literals like [1,2,3,4]
                 return TypeConverter.ConvertType(typeof(object[]), collectionExp);
             }
+            else if(collectionExp.StartsWith("\"\"") && collectionExp.EndsWith("\"\""))
+            {
+                collectionExp = collectionExp.TrimStart("\"\"");
+                collectionExp = collectionExp.TrimEnd("\"\"");
+                var result = collectionExp.ToArray();
+                return result;
+            }
+            else if (collectionExp.StartsWith("\"") && collectionExp.EndsWith("\""))
+            {
+                collectionExp = collectionExp.TrimStart('"');
+                collectionExp = collectionExp.TrimEnd('"');
+                var result = collectionExp.ToArray();
+                return result;
+            }
 
-            throw new Exception("Unsupported collection expression.");
+            return collectionExp.ToString().ToArray();
         }
 
         // Helper function to detect if the string is an array
@@ -441,10 +518,10 @@ namespace RoBin
             }
             return true;
         }
-        public string Join(string chot,string[] strings) => string.Join(chot,strings);
+        public string Join(string chot, string[] strings) => string.Join(chot, strings);
         public void Exit() => Exit(0);
-        public void Exit(int code=0)
-            =>Environment.Exit(code);
+        public void Exit(int code = 0)
+            => Environment.Exit(code);
 
         public int add(int parm1, int parm2)
             => parm1 + parm2;
@@ -453,7 +530,7 @@ namespace RoBin
 
             if (ob is not null or "")
             {
-                printf((type: TypeConverter.ConvertType(null,ob)!.GetType(), name: ob));
+                printf((type: TypeConverter.ConvertType(null!, ob)!.GetType(), name: ob));
                 return;
             }
             else

@@ -19,6 +19,7 @@ namespace RoBin
         public BoBin()
         {
             TObjects.Add(new System<TBased>(this));
+            TObjects.Add(new Winsyscall<TBased>(this));
         }
         private string GetValue_Regex = @"\$(.*)";
         public void AddObject(object ob)
@@ -93,7 +94,7 @@ namespace RoBin
 
                     if (cmd == "")
                         continue;
-                    if (Regex.Match(cmd, @"@(.*)\s*\((.*)\)").Success)
+                    if (Regex.Match(cmd, @"@(.*)\s*\((.*)\)$").Success)
                     {
                         callLocalFunc(cmd);
 
@@ -855,7 +856,7 @@ namespace RoBin
         }
         public void callLocalFunc(string function)
         {
-            var FunctionInfo = Regex.Match(function, @"@(.*)\s*\((.*)\)");
+            var FunctionInfo = Regex.Match(function, @"@(.*)\s*\((.*)\)$");
             if (FunctionInfo.Success)
             {
                 string FunctionName = FunctionInfo.Groups[1].Value;
